@@ -1,10 +1,24 @@
-go-gelf - GELF library and writer for Go
+go-gelf - GELF Library and Writer for Go
 ========================================
 
-GELF is graylog2's UDP logging format.  This library provides an API
-that applications can use to log messages directly to a graylog2
-server, along with an `io.Writer` that can be use to redirect the
-standard library's log messages (or `os.Stdout`), to a graylog2 server.
+[GELF] (Graylog Extended Log Format) is an application-level logging
+protocol that avoids many of the shortcomings of [syslog]. While it
+can be run over any stream or datagram transport protocol, it has
+special support ([chunking]) to allow long messages to be split over
+multiple datagrams.
+
+This implementation currently supports only UDP as a transport
+protocol. TCP and TLS are unsupported.
+
+The library provides an API that applications can use to log messages
+directly to a Graylog server and an `io.Writer` that can be used to
+redirect the standard library's log messages (`os.Stdout`) to a
+Graylog server.
+
+[GELF]: http://docs.graylog.org/en/2.2/pages/gelf.html
+[syslog]: https://tools.ietf.org/html/rfc5424
+[chunking]: http://docs.graylog.org/en/2.2/pages/gelf.html#chunked-gelf
+
 
 Installing
 ----------
@@ -60,10 +74,11 @@ The above program can be invoked as:
 
 	go run test.go -graylog=localhost:12201
 
-Because GELF messages are sent over UDP, graylog server availability
-doesn't impact application performance or response time.  There is a
-small, fixed overhead per log call, regardless of whether the target
+When using UDP messages may be dropped or re-ordered. However, Graylog
+server availability will not impact application performance; there is
+a small, fixed overhead per log call regardless of whether the target
 server is reachable or not.
+
 
 To Do
 -----
