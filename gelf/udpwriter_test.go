@@ -17,8 +17,8 @@ import (
 	"time"
 )
 
-func TestNewWriter(t *testing.T) {
-	w, err := NewWriter("")
+func TestNewUDPWriter(t *testing.T) {
+	w, err := NewUDPWriter("")
 	if err == nil || w != nil {
 		t.Errorf("New didn't fail")
 		return
@@ -31,9 +31,9 @@ func sendAndRecv(msgData string, compress CompressType) (*Message, error) {
 		return nil, fmt.Errorf("NewReader: %s", err)
 	}
 
-	w, err := NewWriter(r.Addr())
+	w, err := NewUDPWriter(r.Addr())
 	if err != nil {
-		return nil, fmt.Errorf("NewWriter: %s", err)
+		return nil, fmt.Errorf("NewUDPWriter: %s", err)
 	}
 	w.CompressionType = compress
 
@@ -41,6 +41,7 @@ func sendAndRecv(msgData string, compress CompressType) (*Message, error) {
 		return nil, fmt.Errorf("w.Write: %s", err)
 	}
 
+	w.Close()
 	return r.ReadMessage()
 }
 
@@ -50,9 +51,9 @@ func sendAndRecvMsg(msg *Message, compress CompressType) (*Message, error) {
 		return nil, fmt.Errorf("NewReader: %s", err)
 	}
 
-	w, err := NewWriter(r.Addr())
+	w, err := NewUDPWriter(r.Addr())
 	if err != nil {
-		return nil, fmt.Errorf("NewWriter: %s", err)
+		return nil, fmt.Errorf("NewUDPWriter: %s", err)
 	}
 	w.CompressionType = compress
 
@@ -60,6 +61,7 @@ func sendAndRecvMsg(msg *Message, compress CompressType) (*Message, error) {
 		return nil, fmt.Errorf("w.Write: %s", err)
 	}
 
+	w.Close()
 	return r.ReadMessage()
 }
 
@@ -76,7 +78,7 @@ func TestWriteSmallMultiLine(t *testing.T) {
 		}
 
 		if msg.Short != "awesomesauce" {
-			t.Errorf("msg.Short: expected %s, got %s", msgData, msg.Full)
+			t.Errorf("msg.Short: expected %s, got %s", "awesomesauce", msg.Full)
 			return
 		}
 
@@ -110,7 +112,7 @@ func TestWriteSmallOneLine(t *testing.T) {
 		return
 	}
 
-	fileExpected := "/go-gelf/gelf/writer_test.go"
+	fileExpected := "/go-gelf/gelf/udpwriter_test.go"
 	if !strings.HasSuffix(msg.Extra["_file"].(string), fileExpected) {
 		t.Errorf("msg.File: expected %s, got %s", fileExpected,
 			msg.Extra["_file"].(string))
@@ -131,13 +133,13 @@ func TestGetCaller(t *testing.T) {
 	}
 
 	file, _ = getCaller(0)
-	if !strings.HasSuffix(file, "/gelf/writer_test.go") {
-		t.Errorf("not writer_test.go 1? %s", file)
+	if !strings.HasSuffix(file, "/gelf/udpwriter_test.go") {
+		t.Errorf("not udpwriter_test.go 1? %s", file)
 	}
 
 	file, _ = getCallerIgnoringLogMulti(0)
-	if !strings.HasSuffix(file, "/gelf/writer_test.go") {
-		t.Errorf("not writer_test.go 2? %s", file)
+	if !strings.HasSuffix(file, "/gelf/udpwriter_test.go") {
+		t.Errorf("not udpwriter_test.go 2? %s", file)
 	}
 }
 
@@ -177,7 +179,7 @@ func TestExtraData(t *testing.T) {
 	extra := map[string]interface{}{
 		"_a":    10 * time.Now().Unix(),
 		"C":     9,
-		"_file": "writer_test.go",
+		"_file": "udpwriter_test.go",
 		"_line": 186,
 	}
 
@@ -190,7 +192,7 @@ func TestExtraData(t *testing.T) {
 		Full:     string(full),
 		TimeUnix: float64(time.Now().Unix()),
 		Level:    6, // info
-		Facility: "writer_test",
+		Facility: "udpwriter_test",
 		Extra:    extra,
 		RawExtra: []byte(`{"woo": "hoo"}`),
 	}
@@ -240,9 +242,9 @@ func BenchmarkWriteBestSpeed(b *testing.B) {
 		b.Fatalf("NewReader: %s", err)
 	}
 	go io.Copy(ioutil.Discard, r)
-	w, err := NewWriter(r.Addr())
+	w, err := NewUDPWriter(r.Addr())
 	if err != nil {
-		b.Fatalf("NewWriter: %s", err)
+		b.Fatalf("NewUDPWriter: %s", err)
 	}
 	w.CompressionLevel = flate.BestSpeed
 	b.ResetTimer()
@@ -266,9 +268,9 @@ func BenchmarkWriteNoCompression(b *testing.B) {
 		b.Fatalf("NewReader: %s", err)
 	}
 	go io.Copy(ioutil.Discard, r)
-	w, err := NewWriter(r.Addr())
+	w, err := NewUDPWriter(r.Addr())
 	if err != nil {
-		b.Fatalf("NewWriter: %s", err)
+		b.Fatalf("NewUDPWriter: %s", err)
 	}
 	w.CompressionLevel = flate.NoCompression
 	b.ResetTimer()
@@ -292,9 +294,9 @@ func BenchmarkWriteDisableCompressionCompletely(b *testing.B) {
 		b.Fatalf("NewReader: %s", err)
 	}
 	go io.Copy(ioutil.Discard, r)
-	w, err := NewWriter(r.Addr())
+	w, err := NewUDPWriter(r.Addr())
 	if err != nil {
-		b.Fatalf("NewWriter: %s", err)
+		b.Fatalf("NewUDPWriter: %s", err)
 	}
 	w.CompressionType = CompressNone
 	b.ResetTimer()
@@ -318,9 +320,9 @@ func BenchmarkWriteDisableCompressionAndPreencodeExtra(b *testing.B) {
 		b.Fatalf("NewReader: %s", err)
 	}
 	go io.Copy(ioutil.Discard, r)
-	w, err := NewWriter(r.Addr())
+	w, err := NewUDPWriter(r.Addr())
 	if err != nil {
-		b.Fatalf("NewWriter: %s", err)
+		b.Fatalf("NewUDPWriter: %s", err)
 	}
 	w.CompressionType = CompressNone
 	b.ResetTimer()
