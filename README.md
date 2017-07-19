@@ -20,8 +20,8 @@ To see up to date code, make sure to switch to the master branch.
 v1.0.0
 ------
 
-This implementation currently supports only UDP as a transport
-protocol. TCP and TLS are unsupported.
+This implementation currently supports UDP and TCP as a transport
+protocol. TLS is unsupported.
 
 The library provides an API that applications can use to log messages
 directly to a Graylog server and an `io.Writer` that can be used to
@@ -74,7 +74,10 @@ giving us both centralized and local logs.  (Redundancy is nice).
 		flag.Parse()
 
 		if graylogAddr != "" {
-			gelfWriter, err := gelf.NewWriter(graylogAddr)
+            // If using UDP
+			gelfWriter, err := gelf.NewUDPWriter(graylogAddr)
+            // If using TCP
+            //gelfWriter, err := gelf.NewTCPWriter(graylogAddr)
 			if err != nil {
 				log.Fatalf("gelf.NewWriter: %s", err)
 			}
@@ -84,7 +87,7 @@ giving us both centralized and local logs.  (Redundancy is nice).
 		}
 
 		// From here on out, any calls to log.Print* functions
-		// will appear on stdout, and be sent over UDP to the
+		// will appear on stdout, and be sent over UDP or TCP to the
 		// specified Graylog2 server.
 
 		log.Printf("Hello gray World")
