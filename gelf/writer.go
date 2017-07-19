@@ -76,14 +76,14 @@ var (
 
 // Syslog severity levels
 const (
-	LOG_EMERG   = int32(0)
-	LOG_ALERT   = int32(1)
-	LOG_CRIT    = int32(2)
-	LOG_ERR     = int32(3)
-	LOG_WARNING = int32(4)
-	LOG_NOTICE  = int32(5)
-	LOG_INFO    = int32(6)
-	LOG_DEBUG   = int32(7)
+	LOG_EMERG   = 0
+	LOG_ALERT   = 1
+	LOG_CRIT    = 2
+	LOG_ERR     = 3
+	LOG_WARNING = 4
+	LOG_NOTICE  = 5
+	LOG_INFO    = 6
+	LOG_DEBUG   = 7
 )
 
 // numChunks returns the number of GELF chunks necessary to transmit
