@@ -6,15 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"sync"
 )
 
 type TCPReader struct {
-	mu       sync.Mutex
-	okToRead sync.Mutex
 	listener *net.TCPListener
 	conn     net.Conn
-	cBuf     []byte
+	messages chan []byte
 }
 
 func newTCPReader(addr string) (*TCPReader, chan string, error) {
@@ -29,9 +26,11 @@ func newTCPReader(addr string) (*TCPReader, chan string, error) {
 		return nil, nil, fmt.Errorf("ListenTCP: %s", err)
 	}
 
-	r := new(TCPReader)
-	r.listener = listener
-	r.okToRead.Lock()
+	r := &TCPReader{
+		listener: listener,
+		messages: make(chan []byte, 100), // Make a buffered channel with at most 100 messages
+	}
+
 	signal := make(chan string, 1)
 
 	go r.listenUntilCloseSignal(signal)
@@ -47,7 +46,7 @@ func (r *TCPReader) listenUntilCloseSignal(signal chan string) {
 		if err != nil {
 			break
 		}
-		go r.handleConnection(conn)
+		go handleConnection(conn, r.messages)
 		select {
 		case sig := <-signal:
 			if sig == "stop" {
@@ -62,37 +61,30 @@ func (r *TCPReader) addr() string {
 	return r.listener.Addr().String()
 }
 
-func (r *TCPReader) handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, messages chan<- []byte) {
 	defer conn.Close()
-
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.cBuf = nil
-
 	reader := bufio.NewReader(conn)
-	buffer, err := reader.ReadBytes(0)
-	if err == nil {
-		r.cBuf = buffer
-		r.okToRead.Unlock()
+
+	var b []byte
+	var err error
+
+	for {
+		if b, err = reader.ReadBytes(0); err != nil {
+			continue
+		}
+		messages <- b
 	}
 }
 
 func (r *TCPReader) readMessage() (*Message, error) {
-	r.okToRead.Lock()
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	b := <-r.messages
 
-	var cReader *bytes.Reader
-
-	cReader = bytes.NewReader(r.cBuf)
-
-	msg := new(Message)
-	if err := json.NewDecoder(cReader).Decode(&msg); err != nil {
+	var msg Message
+	if err := json.NewDecoder(bytes.NewReader(b)).Decode(&msg); err != nil {
 		return nil, fmt.Errorf("json.Unmarshal: %s", err)
 	}
 
-	r.cBuf = nil
-	return msg, nil
+	return &msg, nil
 }
 
 func (r *TCPReader) Close() {
