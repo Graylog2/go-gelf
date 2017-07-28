@@ -2,7 +2,6 @@ package gelf
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -72,7 +71,9 @@ func handleConnection(conn net.Conn, messages chan<- []byte) {
 		if b, err = reader.ReadBytes(0); err != nil {
 			continue
 		}
-		messages <- b
+		if len(b) > 0 {
+			messages <- b
+		}
 	}
 }
 
@@ -80,7 +81,7 @@ func (r *TCPReader) readMessage() (*Message, error) {
 	b := <-r.messages
 
 	var msg Message
-	if err := json.NewDecoder(bytes.NewReader(b)).Decode(&msg); err != nil {
+	if err := json.Unmarshal(b[:len(b)-1], &msg); err != nil {
 		return nil, fmt.Errorf("json.Unmarshal: %s", err)
 	}
 
