@@ -1,6 +1,8 @@
 go-gelf - GELF Library and Writer for Go
 ========================================
 
+[![Join the chat at https://gitter.im/Graylog2/go-gelf.svg](https://badges.gitter.im/Graylog2/go-gelf.svg)](https://gitter.im/Graylog2/go-gelf?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [GELF] (Graylog Extended Log Format) is an application-level logging
 protocol that avoids many of the shortcomings of [syslog]. While it
 can be run over any stream or datagram transport protocol, it has
