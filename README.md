@@ -56,42 +56,42 @@ The easiest way to integrate graylog logging into your go app is by
 having your `main` function (or even `init`) call `log.SetOutput()`.
 By using an `io.MultiWriter`, we can log to both stdout and graylog -
 giving us both centralized and local logs.  (Redundancy is nice).
+``` golang
+package main
 
-	package main
+import (
+	"flag"
+	"gopkg.in/Graylog2/go-gelf.v1/gelf"
+	"io"
+	"log"
+	"os"
+)
 
-	import (
-		"flag"
-		"gopkg.in/Graylog2/go-gelf.v1/gelf"
-		"io"
-		"log"
-		"os"
-	)
+func main() {
+	var graylogAddr string
 
-	func main() {
-		var graylogAddr string
+	flag.StringVar(&graylogAddr, "graylog", "", "graylog server addr")
+	flag.Parse()
 
-		flag.StringVar(&graylogAddr, "graylog", "", "graylog server addr")
-		flag.Parse()
-
-		if graylogAddr != "" {
-			gelfWriter, err := gelf.NewWriter(graylogAddr)
-			if err != nil {
-				log.Fatalf("gelf.NewWriter: %s", err)
-			}
-			// log to both stderr and graylog2
-			log.SetOutput(io.MultiWriter(os.Stderr, gelfWriter))
-			log.Printf("logging to stderr & graylog2@'%s'", graylogAddr)
+	if graylogAddr != "" {
+		gelfWriter, err := gelf.NewWriter(graylogAddr)
+		if err != nil {
+			log.Fatalf("gelf.NewWriter: %s", err)
 		}
-
-		// From here on out, any calls to log.Print* functions
-		// will appear on stdout, and be sent over UDP to the
-		// specified Graylog2 server.
-
-		log.Printf("Hello gray World")
-
-		// ...
+		// log to both stderr and graylog2
+		log.SetOutput(io.MultiWriter(os.Stderr, gelfWriter))
+		log.Printf("logging to stderr & graylog2@'%s'", graylogAddr)
 	}
 
+	// From here on out, any calls to log.Print* functions
+	// will appear on stdout, and be sent over UDP to the
+	// specified Graylog2 server.
+
+	log.Printf("Hello gray World")
+
+	// ...
+}
+```
 The above program can be invoked as:
 
 	go run test.go -graylog=localhost:12201
