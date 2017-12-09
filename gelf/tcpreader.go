@@ -73,7 +73,7 @@ func (r *TCPReader) listenUntilCloseSignal(closeSignal chan string, doneSignal c
 
 		select {
 		case sig := <-closeSignal:
-			if sig == "stop" {
+			if sig == "stop" || sig == "drop" {
 				if len(conns) >= 1 {
 					for _, s := range conns {
 						if s.drop != nil {
@@ -82,22 +82,15 @@ func (r *TCPReader) listenUntilCloseSignal(closeSignal chan string, doneSignal c
 							conns = append(conns[:0], conns[1:]...)
 						}
 					}
-					return
-				} else {
+					if sig == "stop" {
+						return
+					}
+				} else if sig == "stop" {
 					closeSignal <- "stop"
 				}
-			}
-			if sig == "drop" {
-				if len(conns) >= 1 {
-					for _, s := range conns {
-						if s.drop != nil {
-							s.drop <- "drop"
-							<-s.confirm
-							conns = append(conns[:0], conns[1:]...)
-						}
-					}
+				if sig == "drop" {
+					doneSignal <- "done"
 				}
-				doneSignal <- "done"
 			}
 		default:
 		}
