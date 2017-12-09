@@ -14,7 +14,7 @@ type TCPReader struct {
 	messages chan []byte
 }
 
-type conn_channels struct {
+type connChannels struct {
 	drop    chan string
 	confirm chan string
 }
@@ -36,12 +36,12 @@ func newTCPReader(addr string) (*TCPReader, chan string, chan string, error) {
 		messages: make(chan []byte, 100), // Make a buffered channel with at most 100 messages
 	}
 
-	close_signal := make(chan string, 1)
-	done_signal := make(chan string, 1)
+	closeSignal := make(chan string, 1)
+	doneSignal := make(chan string, 1)
 
-	go r.listenUntilCloseSignal(close_signal, done_signal)
+	go r.listenUntilCloseSignal(closeSignal, doneSignal)
 
-	return r, close_signal, done_signal, nil
+	return r, closeSignal, doneSignal, nil
 }
 
 func (r *TCPReader) accepter(connections chan net.Conn) {
@@ -54,25 +54,25 @@ func (r *TCPReader) accepter(connections chan net.Conn) {
 	}
 }
 
-func (r *TCPReader) listenUntilCloseSignal(close_signal chan string, done_signal chan string) {
-	defer func() { done_signal <- "done" }()
+func (r *TCPReader) listenUntilCloseSignal(closeSignal chan string, doneSignal chan string) {
+	defer func() { doneSignal <- "done" }()
 	defer r.listener.Close()
-	var conns []conn_channels
-	connections_channel := make(chan net.Conn, 1)
-	go r.accepter(connections_channel)
+	var conns []connChannels
+	connectionsChannel := make(chan net.Conn, 1)
+	go r.accepter(connectionsChannel)
 	for {
 		select {
-		case conn := <-connections_channel:
-			drop_signal := make(chan string, 1)
-			drop_confirm := make(chan string, 1)
-			channels := conn_channels{drop: drop_signal, confirm: drop_confirm}
-			go handleConnection(conn, r.messages, drop_signal, drop_confirm)
+		case conn := <-connectionsChannel:
+			dropSignal := make(chan string, 1)
+			dropConfirm := make(chan string, 1)
+			channels := connChannels{drop: dropSignal, confirm: dropConfirm}
+			go handleConnection(conn, r.messages, dropSignal, dropConfirm)
 			conns = append(conns, channels)
 		default:
 		}
 
 		select {
-		case sig := <-close_signal:
+		case sig := <-closeSignal:
 			if sig == "stop" {
 				if len(conns) >= 1 {
 					for _, s := range conns {
@@ -84,7 +84,7 @@ func (r *TCPReader) listenUntilCloseSignal(close_signal chan string, done_signal
 					}
 					return
 				} else {
-					close_signal <- "stop"
+					closeSignal <- "stop"
 				}
 			}
 			if sig == "drop" {
@@ -97,7 +97,7 @@ func (r *TCPReader) listenUntilCloseSignal(close_signal chan string, done_signal
 						}
 					}
 				}
-				done_signal <- "done"
+				doneSignal <- "done"
 			}
 		default:
 		}
@@ -108,15 +108,15 @@ func (r *TCPReader) addr() string {
 	return r.listener.Addr().String()
 }
 
-func handleConnection(conn net.Conn, messages chan<- []byte, drop_signal chan string, drop_confirm chan string) {
-	defer func() { drop_confirm <- "done" }()
+func handleConnection(conn net.Conn, messages chan<- []byte, dropSignal chan string, dropConfirm chan string) {
+	defer func() { dropConfirm <- "done" }()
 	defer conn.Close()
 	reader := bufio.NewReader(conn)
 
 	var b []byte
 	var err error
 	drop := false
-	can_drop := false
+	canDrop := false
 
 	for {
 		conn.SetDeadline(time.Now().Add(2 * time.Second))
@@ -126,7 +126,7 @@ func handleConnection(conn net.Conn, messages chan<- []byte, drop_signal chan st
 			}
 		} else if len(b) > 0 {
 			messages <- b
-			can_drop = true
+			canDrop = true
 			if drop {
 				return
 			}
@@ -134,11 +134,11 @@ func handleConnection(conn net.Conn, messages chan<- []byte, drop_signal chan st
 			return
 		}
 		select {
-		case sig := <-drop_signal:
+		case sig := <-dropSignal:
 			if sig == "drop" {
 				drop = true
 				time.Sleep(1 * time.Second)
-				if can_drop {
+				if canDrop {
 					return
 				}
 			}

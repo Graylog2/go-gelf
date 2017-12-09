@@ -216,7 +216,7 @@ func TestWrite2MessagesWithServerDropTCP(t *testing.T) {
 }
 
 func setupConnections() (*TCPReader, chan string, chan string, *TCPWriter, error) {
-	r, close_signal, done_signal, err := newTCPReader("127.0.0.1:0")
+	r, closeSignal, doneSignal, err := newTCPReader("127.0.0.1:0")
 
 	if err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("newTCPReader: %s", err)
@@ -227,11 +227,11 @@ func setupConnections() (*TCPReader, chan string, chan string, *TCPWriter, error
 		return nil, nil, nil, nil, fmt.Errorf("NewTCPWriter: %s", err)
 	}
 
-	return r, close_signal, done_signal, w, nil
+	return r, closeSignal, doneSignal, w, nil
 }
 
 func sendAndRecvTCP(msgData string) (*Message, error) {
-	r, close_signal, done_signal, w, err := setupConnections()
+	r, closeSignal, doneSignal, w, err := setupConnections()
 	if err != nil {
 		return nil, err
 	}
@@ -240,8 +240,8 @@ func sendAndRecvTCP(msgData string) (*Message, error) {
 		return nil, fmt.Errorf("w.Write: %s", err)
 	}
 
-	close_signal <- "stop"
-	done := <-done_signal
+	closeSignal <- "stop"
+	done := <-doneSignal
 	if done != "done" {
 		return nil, errors.New("Wrong signal received")
 	}
@@ -255,7 +255,7 @@ func sendAndRecvTCP(msgData string) (*Message, error) {
 }
 
 func sendAndRecvMsgTCP(msg *Message) (*Message, error) {
-	r, close_signal, done_signal, w, err := setupConnections()
+	r, closeSignal, doneSignal, w, err := setupConnections()
 	if err != nil {
 		return nil, err
 	}
@@ -264,8 +264,8 @@ func sendAndRecvMsgTCP(msg *Message) (*Message, error) {
 		return nil, fmt.Errorf("w.Write: %s", err)
 	}
 
-	close_signal <- "stop"
-	done := <-done_signal
+	closeSignal <- "stop"
+	done := <-doneSignal
 	if done != "done" {
 		return nil, errors.New("Wrong signal received")
 	}
@@ -280,7 +280,7 @@ func sendAndRecvMsgTCP(msg *Message) (*Message, error) {
 }
 
 func sendAndRecv2MessagesWithDropTCP(msgData1 string, msgData2 string) (*Message, *Message, error) {
-	r, close_signal, done_signal, w, err := setupConnections()
+	r, closeSignal, doneSignal, w, err := setupConnections()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -289,8 +289,8 @@ func sendAndRecv2MessagesWithDropTCP(msgData1 string, msgData2 string) (*Message
 		return nil, nil, fmt.Errorf("w.Write: %s", err)
 	}
 
-	close_signal <- "drop"
-	done := <-done_signal
+	closeSignal <- "drop"
+	done := <-doneSignal
 	if done != "done" {
 		return nil, nil, fmt.Errorf("Wrong signal received: %s", done)
 	}
@@ -308,8 +308,8 @@ func sendAndRecv2MessagesWithDropTCP(msgData1 string, msgData2 string) (*Message
 		return nil, nil, fmt.Errorf("write 2 w.Write: %s", err)
 	}
 
-	close_signal <- "stop"
-	done = <-done_signal
+	closeSignal <- "stop"
+	done = <-doneSignal
 	if done != "done" {
 		return nil, nil, errors.New("Wrong signal received")
 	}
@@ -324,7 +324,7 @@ func sendAndRecv2MessagesWithDropTCP(msgData1 string, msgData2 string) (*Message
 }
 
 func sendAndRecv2MessagesWithServerDropTCP(msgData1 string, msgData2 string) (*Message, error) {
-	r, close_signal, done_signal, w, err := setupConnections()
+	r, closeSignal, doneSignal, w, err := setupConnections()
 	if err != nil {
 		return nil, err
 	}
@@ -333,8 +333,8 @@ func sendAndRecv2MessagesWithServerDropTCP(msgData1 string, msgData2 string) (*M
 		return nil, fmt.Errorf("w.Write: %s", err)
 	}
 
-	close_signal <- "stop"
-	done := <-done_signal
+	closeSignal <- "stop"
+	done := <-doneSignal
 	if done != "done" {
 		return nil, fmt.Errorf("Wrong signal received: %s", done)
 	}
