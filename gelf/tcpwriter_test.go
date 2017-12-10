@@ -289,6 +289,8 @@ func sendAndRecv2MessagesWithDropTCP(msgData1 string, msgData2 string) (*Message
 		return nil, nil, fmt.Errorf("w.Write: %s", err)
 	}
 
+	time.Sleep(200 * time.Millisecond)
+
 	closeSignal <- "drop"
 	done := <-doneSignal
 	if done != "done" {
@@ -304,9 +306,11 @@ func sendAndRecv2MessagesWithDropTCP(msgData1 string, msgData2 string) (*Message
 	if _, err = w.Write([]byte(msgData2)); err != nil {
 		return nil, nil, fmt.Errorf("write 1 w.Write: %s", err)
 	}
+	time.Sleep(200 * time.Millisecond)
 	if _, err = w.Write([]byte(msgData2)); err != nil {
 		return nil, nil, fmt.Errorf("write 2 w.Write: %s", err)
 	}
+	time.Sleep(200 * time.Millisecond)
 
 	closeSignal <- "stop"
 	done = <-doneSignal
