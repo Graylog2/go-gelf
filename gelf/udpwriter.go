@@ -22,6 +22,7 @@ type UDPWriter struct {
 	GelfWriter
 	CompressionLevel int // one of the consts from compress/flate
 	CompressionType  CompressType
+	ChunkSize        int
 }
 
 // What compression type the writer should use when sending messages
@@ -41,7 +42,6 @@ const (
 const (
 	ChunkSize        = 1420
 	chunkedHeaderLen = 12
-	chunkedDataLen   = ChunkSize - chunkedHeaderLen
 )
 
 var (
@@ -52,12 +52,12 @@ var (
 
 // numChunks returns the number of GELF chunks necessary to transmit
 // the given compressed buffer.
-func numChunks(b []byte) int {
+func (w *UDPWriter) numChunks(b []byte) int {
 	lenB := len(b)
-	if lenB <= ChunkSize {
+	if lenB <= w.ChunkSize {
 		return 1
 	}
-	return len(b)/chunkedDataLen + 1
+	return len(b)/w.chunkedDataLen() + 1
 }
 
 // New returns a new GELF Writer.  This writer can be used to send the
@@ -76,6 +76,7 @@ func NewUDPWriter(addr string) (*UDPWriter, error) {
 	}
 
 	w.Facility = path.Base(os.Args[0])
+	w.ChunkSize = ChunkSize
 
 	return w, nil
 }
@@ -86,10 +87,10 @@ func NewUDPWriter(addr string) (*UDPWriter, error) {
 //
 //     2-byte magic (0x1e 0x0f), 8 byte id, 1 byte sequence id, 1 byte
 //     total, chunk-data
-func (w *GelfWriter) writeChunked(zBytes []byte) (err error) {
-	b := make([]byte, 0, ChunkSize)
+func (w *UDPWriter) writeChunked(zBytes []byte) (err error) {
+	b := make([]byte, 0, w.ChunkSize)
 	buf := bytes.NewBuffer(b)
-	nChunksI := numChunks(zBytes)
+	nChunksI := w.numChunks(zBytes)
 	if nChunksI > 128 {
 		return fmt.Errorf("msg too large, would need %d chunks", nChunksI)
 	}
@@ -112,11 +113,11 @@ func (w *GelfWriter) writeChunked(zBytes []byte) (err error) {
 		buf.WriteByte(i)
 		buf.WriteByte(nChunks)
 		// slice out our chunk from zBytes
-		chunkLen := chunkedDataLen
+		chunkLen := w.chunkedDataLen()
 		if chunkLen > bytesLeft {
 			chunkLen = bytesLeft
 		}
-		off := int(i) * chunkedDataLen
+		off := int(i) * w.chunkedDataLen()
 		chunk := zBytes[off : off+chunkLen]
 		buf.Write(chunk)
 
@@ -201,7 +202,7 @@ func (w *UDPWriter) WriteMessage(m *Message) (err error) {
 		zBytes = zBuf.Bytes()
 	}
 
-	if numChunks(zBytes) > 1 {
+	if w.numChunks(zBytes) > 1 {
 		return w.writeChunked(zBytes)
 	}
 	n, err := w.conn.Write(zBytes)
@@ -228,4 +229,8 @@ func (w *UDPWriter) Write(p []byte) (n int, err error) {
 	}
 
 	return len(p), nil
+}
+
+func (w *UDPWriter) chunkedDataLen() int {
+	return w.ChunkSize - chunkedHeaderLen
 }
