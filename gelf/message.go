@@ -113,9 +113,7 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (m *Message) toBytes() (messageBytes []byte, err error) {
-	buf := newBuffer()
-	defer bufPool.Put(buf)
+func (m *Message) toBytes(buf *bytes.Buffer) (messageBytes []byte, err error) {
 	if err = m.MarshalJSONBuf(buf); err != nil {
 		return nil, err
 	}
