@@ -249,7 +249,7 @@ func BenchmarkWriteBestSpeed(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		w.WriteMessage(&Message{
 			Version:  "1.1",
-			Host:     w.hostname,
+			Host:     w.Hostname,
 			Short:    "short message",
 			Full:     "full message",
 			TimeUnix: float64(time.Now().Unix()),
@@ -275,7 +275,7 @@ func BenchmarkWriteNoCompression(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		w.WriteMessage(&Message{
 			Version:  "1.1",
-			Host:     w.hostname,
+			Host:     w.Hostname,
 			Short:    "short message",
 			Full:     "full message",
 			TimeUnix: float64(time.Now().Unix()),
@@ -301,7 +301,7 @@ func BenchmarkWriteDisableCompressionCompletely(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		w.WriteMessage(&Message{
 			Version:  "1.1",
-			Host:     w.hostname,
+			Host:     w.Hostname,
 			Short:    "short message",
 			Full:     "full message",
 			TimeUnix: float64(time.Now().Unix()),
@@ -327,7 +327,7 @@ func BenchmarkWriteDisableCompressionAndPreencodeExtra(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		w.WriteMessage(&Message{
 			Version:  "1.1",
-			Host:     w.hostname,
+			Host:     w.Hostname,
 			Short:    "short message",
 			Full:     "full message",
 			TimeUnix: float64(time.Now().Unix()),
