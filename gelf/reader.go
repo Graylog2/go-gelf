@@ -17,8 +17,9 @@ import (
 )
 
 type Reader struct {
-	mu   sync.Mutex
-	conn net.Conn
+	mu        sync.Mutex
+	conn      net.Conn
+	ChunkSize int
 }
 
 func NewReader(addr string) (*Reader, error) {
@@ -35,6 +36,7 @@ func NewReader(addr string) (*Reader, error) {
 
 	r := new(Reader)
 	r.conn = conn
+	r.ChunkSize = ChunkSize
 	return r, nil
 }
 
@@ -62,7 +64,7 @@ func (r *Reader) Read(p []byte) (int, error) {
 }
 
 func (r *Reader) ReadMessage() (*Message, error) {
-	cBuf := make([]byte, ChunkSize)
+	cBuf := make([]byte, r.ChunkSize)
 	var (
 		err        error
 		n, length  int
