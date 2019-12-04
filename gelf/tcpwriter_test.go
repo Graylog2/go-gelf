@@ -72,7 +72,7 @@ func TestWriteSmallMultiLineTCP(t *testing.T) {
 		return
 	}
 
-	assertMessages(msg, "awesomesauce", msgData, t)
+	assertMessages(msg, msgData, msgData, t)
 }
 
 func TestWriteSmallOneLineTCP(t *testing.T) {
@@ -85,7 +85,7 @@ func TestWriteSmallOneLineTCP(t *testing.T) {
 		return
 	}
 
-	assertMessages(msg, msgDataTrunc, "", t)
+	assertMessages(msg, msgDataTrunc, msgDataTrunc, t)
 
 	fileExpected := "/go-gelf/gelf/tcpwriter_test.go"
 	if !strings.HasSuffix(msg.Extra["_file"].(string), fileExpected) {
@@ -114,7 +114,7 @@ func TestWriteBigMessageTCP(t *testing.T) {
 		return
 	}
 
-	assertMessages(msg, "awesomesauce", msgData, t)
+	assertMessages(msg, msgData, msgData, t)
 }
 
 func TestWriteMultiPacketMessageTCP(t *testing.T) {
@@ -131,7 +131,7 @@ func TestWriteMultiPacketMessageTCP(t *testing.T) {
 		return
 	}
 
-	assertMessages(msg, "awesomesauce", msgData, t)
+	assertMessages(msg, msgData, msgData, t)
 }
 
 func TestExtraDataTCP(t *testing.T) {
@@ -145,8 +145,8 @@ func TestExtraDataTCP(t *testing.T) {
 		"_line": 186,
 	}
 
-	short := "quick"
-	full := short + "\nwith more detail"
+	short := "quick" + "\nwith more detail"
+	full := short
 	m := Message{
 		Version:  "1.0",
 		Host:     "fake-host",
@@ -198,8 +198,8 @@ func TestWrite2MessagesWithConnectionDropTCP(t *testing.T) {
 		return
 	}
 
-	assertMessages(msg1, "First message", msgData1, t)
-	assertMessages(msg2, "Second message", msgData2, t)
+	assertMessages(msg1, msgData1, msgData1, t)
+	assertMessages(msg2, msgData2, msgData2, t)
 }
 
 func TestWrite2MessagesWithServerDropTCP(t *testing.T) {
@@ -212,7 +212,7 @@ func TestWrite2MessagesWithServerDropTCP(t *testing.T) {
 		return
 	}
 
-	assertMessages(msg1, "First message", msgData1, t)
+	assertMessages(msg1, msgData1, msgData1, t)
 }
 
 func setupConnections() (*TCPReader, chan string, chan string, *TCPWriter, error) {

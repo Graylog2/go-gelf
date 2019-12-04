@@ -76,16 +76,7 @@ func TestWriteSmallMultiLine(t *testing.T) {
 			t.Errorf("sendAndRecv: %s", err)
 			return
 		}
-
-		if msg.Short != "awesomesauce" {
-			t.Errorf("msg.Short: expected %s, got %s", "awesomesauce", msg.Full)
-			return
-		}
-
-		if msg.Full != msgData {
-			t.Errorf("msg.Full: expected %s, got %s", msgData, msg.Full)
-			return
-		}
+		assertMessages(msg, msgData, msgData, t)
 	}
 }
 
@@ -100,17 +91,7 @@ func TestWriteSmallOneLine(t *testing.T) {
 		return
 	}
 
-	// we should remove the trailing newline
-	if msg.Short != msgDataTrunc {
-		t.Errorf("msg.Short: expected %s, got %s",
-			msgDataTrunc, msg.Short)
-		return
-	}
-
-	if msg.Full != "" {
-		t.Errorf("msg.Full: expected %s, got %s", msgData, msg.Full)
-		return
-	}
+	assertMessages(msg, msgDataTrunc, msgDataTrunc, t)
 
 	fileExpected := "/go-gelf/gelf/udpwriter_test.go"
 	if !strings.HasSuffix(msg.Extra["_file"].(string), fileExpected) {
@@ -159,15 +140,7 @@ func TestWriteBigChunked(t *testing.T) {
 			return
 		}
 
-		if msg.Short != "awesomesauce" {
-			t.Errorf("msg.Short: expected %s, got %s", msgData, msg.Full)
-			return
-		}
-
-		if msg.Full != msgData {
-			t.Errorf("msg.Full: expected %s, got %s", msgData, msg.Full)
-			return
-		}
+		assertMessages(msg, msgData, msgData, t)
 	}
 }
 
@@ -183,8 +156,8 @@ func TestExtraData(t *testing.T) {
 		"_line": 186,
 	}
 
-	short := "quick"
-	full := short + "\nwith more detail"
+	short := "quick\nwith more detail"
+	full := short
 	m := Message{
 		Version:  "1.0",
 		Host:     "fake-host",
@@ -204,15 +177,7 @@ func TestExtraData(t *testing.T) {
 			return
 		}
 
-		if msg.Short != short {
-			t.Errorf("msg.Short: expected %s, got %s", short, msg.Full)
-			return
-		}
-
-		if msg.Full != full {
-			t.Errorf("msg.Full: expected %s, got %s", full, msg.Full)
-			return
-		}
+		assertMessages(msg, short, full, t)
 
 		if len(msg.Extra) != 3 {
 			t.Errorf("extra extra fields in %v", msg.Extra)

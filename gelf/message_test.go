@@ -25,3 +25,11 @@ func TestWrongFieldTypes(t *testing.T) {
 	}
 
 }
+
+func Test_constructMessage_WritesMultilineMessageToBothMessageFields(t *testing.T) {
+	msgText := "hello\nthere"
+	msg := constructMessage([]byte(msgText), "", "", "", 0)
+	if msg.Short != msgText || msg.Full != msgText {
+		t.Errorf("Short field of message \"%s\" does not coincide with message text \"%s\"", msg.Short, msgText)
+	}
+}

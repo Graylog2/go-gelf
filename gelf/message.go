@@ -125,23 +125,12 @@ func constructMessage(p []byte, hostname string, facility string, file string, l
 	// remove trailing and leading whitespace
 	p = bytes.TrimSpace(p)
 
-	// If there are newlines in the message, use the first line
-	// for the short message and set the full message to the
-	// original input.  If the input has no newlines, stick the
-	// whole thing in Short.
-	short := p
-	full := []byte("")
-	if i := bytes.IndexRune(p, '\n'); i > 0 {
-		short = p[:i]
-		full = p
-	}
-
 	m = &Message{
 		Version:  "1.1",
 		Host:     hostname,
-		Short:    string(short),
-		Full:     string(full),
 		TimeUnix: float64(time.Now().UnixNano()) / float64(time.Second),
+		Short:    string(p),
+		Full:     string(p),
 		Level:    6, // info
 		Facility: facility,
 		Extra: map[string]interface{}{
