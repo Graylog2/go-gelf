@@ -105,11 +105,90 @@ server availability will not impact application performance; there is
 a small, fixed overhead per log call regardless of whether the target
 server is reachable or not.
 
+### WriteMessage Example
+
+```golang
+/*
+This is a very basic example of sending custom messages to Graylog with the go-gelf package
+GELF Spec https://docs.graylog.org/en/3.2/pages/gelf.html#gelf-via-udp
+*/
+
+package main
+
+import (
+	"fmt"
+	"gopkg.in/Graylog2/go-gelf.v2/gelf"
+	"os"
+	"runtime"
+	"time"
+)
+
+// GelfWriter is a pointer to a gelf.UPDWriter
+var GelfWriter *gelf.UDPWriter
+
+// GelfHostname is used across GELF messages to provide the source field
+var GelfHostname string
+
+func main() {
+	fmt.Println("Starting tests")
+	GelfHostname, _ = os.Hostname()
+	createLogger()
+	logMsg()
+}
+
+func createLogger() {
+	GelfWriter, _ = gelf.NewUDPWriter("172.28.253.58:11589")
+
+}
+
+func wrapBuildMessage(s string, f string, l int32, ex map[string]interface{}) *gelf.Message {
+	/*
+		Level is a stanard syslog level
+		Facility is deprecated
+		Line is deprecated
+		File is deprecated
+	*/
+
+	m := &gelf.Message{
+		Version:  "1.1",
+		Host:     GelfHostname,
+		Short:    s,
+		Full:     f,
+		TimeUnix: float64(time.Now().Unix()),
+		Level:    l,
+		Extra:    ex,
+	}
+
+	return m
+}
+
+func LogMsg() {
+
+	var level int32
+
+	shortMsg := "Error"
+	fullMsg := "Stack trace here"
+	level = 3 // https://success.trendmicro.com/solution/TP000086250-What-are-Syslog-Facilities-and-Levels
+	_, file, line, _ := runtime.Caller(1)
+	customExtras := map[string]interface{}{"file": file, "line": line, "job_name": "testJob"}
+
+	customMessage := wrapBuildMessage(shortMsg, fullMsg, level, customExtras)
+
+	e := GelfWriter.WriteMessage(customMessage)
+
+	if e != nil {
+		fmt.Println("Received error when sending GELF message:", e.Error())
+	} else {
+		fmt.Println("Sent message")
+	}
+
+}
+```
 
 To Do
 -----
 
-- WriteMessage example
+- ~~WriteMessage example~~
 
 License
 -------
