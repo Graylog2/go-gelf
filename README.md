@@ -1,4 +1,4 @@
-go-gelf - GELF Library and Writer for Go
+go-zerolog-gelf - GELF Library and Writer for Go
 ========================================
 
 [GELF] (Graylog Extended Log Format) is an application-level logging
@@ -38,16 +38,9 @@ Installing
 
 go-gelf is go get-able:
 
-    go get gopkg.in/Graylog2/go-gelf.v1/gelf
-
-    or
-
-	go get github.com/Graylog2/go-gelf/gelf
+	go get github.com/vovailchenko/go-zerolog-gelf/gelf
 
 This will get you version 1.0.0, with only UDP support and legacy API.
-Newer versions are available through GoPkg.in:
-
-    go get gopkg.in/Graylog2/go-gelf.v2/gelf
 
 Usage
 -----
@@ -61,7 +54,7 @@ package main
 
 import (
 	"flag"
-	"gopkg.in/Graylog2/go-gelf.v1/gelf"
+	"github.com/vovailchenko/go-zerolog-gelf/gelf"
 	"io"
 	"log"
 	"os"
